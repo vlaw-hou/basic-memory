@@ -4,15 +4,33 @@
 version: '3.8'
 
 services:
-  basic-memory:
+  basic-memory-server:
+
+    container_name: basic-memory-server  
+
     # Use pre-built image (recommended for most users)
     image: ghcr.io/basicmachines-co/basic-memory:latest
     
-    # Uncomment to build locally instead:
-    # build: .
+    networks:
+      - caddynet
+
+    # Port exposure for HTTP transport (only needed if not using STDIO)
+    ports:
+      - "8000:8000"
     
-    container_name: basic-memory-server
-    
+    environment:
+      # Project configuration
+      - BASIC_MEMORY_DEFAULT_PROJECT=main
+      
+      # Enable real-time file synchronization (recommended for Docker)
+      - BASIC_MEMORY_SYNC_CHANGES=true
+      
+      # Logging configuration
+      - BASIC_MEMORY_LOG_LEVEL=INFO
+      
+      # Sync delay in milliseconds (adjust for performance vs responsiveness)
+      - BASIC_MEMORY_SYNC_DELAY=1000
+        
     # Volume mounts for knowledge directories and persistent data
     volumes:
 
@@ -31,23 +49,8 @@ services:
 
       # You can edit the project config manually in the mounted config volume
       # The default project will be configured to use /app/data
-    environment:
-      # Project configuration
-      - BASIC_MEMORY_DEFAULT_PROJECT=main
-      
-      # Enable real-time file synchronization (recommended for Docker)
-      - BASIC_MEMORY_SYNC_CHANGES=true
-      
-      # Logging configuration
-      - BASIC_MEMORY_LOG_LEVEL=INFO
-      
-      # Sync delay in milliseconds (adjust for performance vs responsiveness)
-      - BASIC_MEMORY_SYNC_DELAY=1000
-    
-    # Port exposure for HTTP transport (only needed if not using STDIO)
-    ports:
-      - "8000:8000"
-    
+
+
     # Command with SSE transport (configurable via environment variables above)
     # IMPORTANT: The SSE and streamable-http endpoints are not secured
     command: ["basic-memory", "mcp", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]
@@ -80,6 +83,8 @@ volumes:
     driver: local
 
 # Network configuration (optional)
-# networks:
-#   basic-memory-net:
-#     driver: bridge
+networks:
+  caddynet: 
+    external: true
+
+
